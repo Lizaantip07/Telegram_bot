@@ -1,0 +1,215 @@
+import logging
+from telegram.ext import Application, MessageHandler, filters, CommandHandler
+from telegram import ReplyKeyboardMarkup
+from TOKEN import BOT_TOKEN
+import datetime as dt
+
+reply_keyboard = [["/movie", "/series"]]
+markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+
+GENRE_MESSAGES = {"/action": 'action', "/adventure": 'adventure', "/comedy": 'comedy',
+                  "/drama": 'drama', "/fantasy": 'fantasy', "/horror": 'horror',
+                  "/musicals": 'musicals', "/romance": 'romance', "/science_fiction": 'science_fiction',
+                  "/thriller": 'thriller'}
+
+COUNTRY_MESSAGES = {"/USA": 'USA', "/Russia": 'Russia', "/Canada": 'Canada',
+                    "/Spain": 'Spain', "/France": 'France', "/Italy": 'Italy',
+                    "/China": 'China', "/Japan": 'Japan'}
+
+CHOICE = {'genre': [], 'country': [], 'year': []}
+
+
+async def start(update, context):
+    user = update.effective_user
+    await update.message.reply_html(
+        rf"Привет {user.mention_html()}! Я - бот, который поможет Вам подобрать отличный фильм или сериал! Что хотите посмотреть?",
+        reply_markup=markup
+    )
+
+
+async def movie(update, context):
+    reply_keyboard = [
+        ["/yes"],
+        ["/no"],
+    ]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text("Вы хотите выбрать необходимые критерии?", reply_markup=markup)
+
+
+async def series(update, context):
+    reply_keyboard = [
+        ["/yes"],
+        ["/no"],
+    ]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text("Вы хотите выбрать необходимые критерии?", reply_markup=markup)
+
+
+async def no(update, context):
+    await update.message.reply_text("Хорошо, тогда я предоставлю Вам любой фильм.", reply_markup=markup)
+
+
+async def yes(update, context):
+    chat_id = update.message.text
+    reply_keyboard = [
+        ["/action"],
+        ["/adventure"],
+        ["/comedy"],
+        ["/drama"],
+        ["/fantasy"],
+        ["/horror"],
+        ["/musicals"],
+        ["/romance"],
+        ["/science_fiction"],
+        ["/thriller"],
+        ["/reset"],
+    ]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text("Выберите жанр:", reply_markup=markup)
+
+
+async def add_genre(update, context):
+    reply_keyboard = [
+        ["/yes"],
+        ["/next_criterion"],
+    ]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    message = update.message.text
+    is_genre = GENRE_MESSAGES.get(message)
+    if is_genre == 'None':
+        return CHOICE
+    else:
+        CHOICE["genre"].append(is_genre)
+        await update.message.reply_text(f'Вы выбрали жанр {is_genre}. Хотите выбрать ещё один жанр или перейти на следующий критерий?', reply_markup=markup)
+
+
+'''async def ask_add_genre(update, context):
+    chat_id = update.message.chat_id
+    await update.message.reply_text('Хотите выбрать еще жанр?', reply_markup=markup)
+    reply_keyboard = [["/да"], ["/нет"]] 
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text('Ок', reply_markup=markup)'''
+
+
+async def next_criterion(update, context):
+    chat_id = update.message.chat_id
+    reply_keyboard = [
+        ["/USA"],
+        ["/Russia"],
+        ["/Canada"],
+        ["/Spain"],
+        ["/France"],
+        ["/Italy"],
+        ["/China"],
+        ["/Japan"],
+        ["/reset"],
+    ]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text("Выберите страну:", reply_markup=markup)
+
+
+async def add_country(update, context):
+    message = update.message.text
+    is_country = COUNTRY_MESSAGES.get(message)
+    await update.message.reply_text(f'Вы выбрали страну {is_country}.')
+    CHOICE["country"].append(is_country)
+
+
+'''async def ask_add_country(update, context):
+    chat_id = update.message.chat_id
+    await update.message.reply_text('Хотите выбрать еще страну?', reply_markup=markup)
+    reply_keyboard = [["/да"], ["/нет"]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text('Ок', reply_markup=markup)'''
+
+
+async def year(update, context):
+    await update.message.reply_text("Введите год:", reply_markup=markup)
+
+
+async def reset(update, context):
+    chat_id = update.message.chat_id
+    reply_keyboard = [["/movie"], ["/series"]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text('Вы вернулись в меню', reply_markup=markup)
+
+
+def Isdigit(message):
+    if 1927 <= int(message) <= 2022:
+        return True
+    else:
+        return False
+
+
+'''async def would_like_year(update, context):
+    reply_keyboard = [["/да"], ["/нет"]]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+    await update.message.reply_text('Хотите выбрать еще?', reply_markup=markup)
+    ms = update.message.text
+    if ms == '/да':
+        return True
+    else:
+        return False'''
+
+
+async def echo(update, context):
+    message = update.message.text
+    is_genre = GENRE_MESSAGES.get(message)
+    is_country = COUNTRY_MESSAGES.get(message)
+    is_year = 0
+    CHOICE["genre"].append(is_genre)
+    CHOICE["country"].append(is_country)
+
+    if Isdigit(message):
+        is_year = message
+        CHOICE["year"].append(is_year)
+
+    if is_year:
+        await update.message.reply_text(f'Вы выбрали год {is_year}.')
+        '''if would_like_year(update, context):
+            await update.message.reply_text(f'Введите год:')
+            message = update.message.text
+            is_year = 0
+            await update.message.reply_text(f'Вы выбрали год {is_year}.')
+            if Isdigit(message):
+                is_year = message
+                CHOICE["year"].append(is_year)'''
+
+    if is_genre:
+        await update.message.reply_text(f'Вы выбрали жанр {is_genre}.')
+        '''reply_keyboard = [["/да"], ["/нет"]]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+        await update.message.reply_text('Хотите выбрать еще?', reply_markup=markup)
+        yesno = {'/да': 'yes', '/нет': 'no'}'''
+
+    elif is_country:
+        await update.message.reply_text(f'Вы выбрали страну {is_country}.')
+        '''reply_keyboard = [["/да"], ["/нет"]]
+        markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
+        await update.message.reply_text('Хотите выбрать еще?', reply_markup=markup)'''
+
+    print(CHOICE)
+
+
+def main():
+    application = Application.builder().token(BOT_TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("movie", movie))
+    #application.add_handler(CommandHandler("series", series))
+    application.add_handler(CommandHandler("no", no))
+    application.add_handler(CommandHandler("yes", yes))
+    application.add_handler(MessageHandler(filters.TEXT, add_genre))
+    application.add_handler(CommandHandler("next_criterion", next_criterion))
+    application.add_handler(MessageHandler(filters.TEXT, add_country))
+    '''application.add_handler(CommandHandler("year", year))
+    application.add_handler(CommandHandler("reset", reset))
+    #application.add_handler(MessageHandler(filters.TEXT, echo))'''
+    application.run_polling()
+
+
+if __name__ == '__main__':
+    main()
+
+
+
+
