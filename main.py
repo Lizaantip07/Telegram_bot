@@ -2,6 +2,7 @@ import logging
 from telegram.ext import Application, MessageHandler, filters, CommandHandler
 from telegram import ReplyKeyboardMarkup
 from TOKEN import BOT_TOKEN
+
 import datetime as dt
 
 reply_keyboard = [["/movie", "/series"]]
@@ -69,6 +70,7 @@ async def yes(update, context):
 
 
 async def add_genre(update, context):
+    cnt = 0
     reply_keyboard = [
         ["/yes"],
         ["/next_criterion"],
@@ -76,8 +78,12 @@ async def add_genre(update, context):
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     message = update.message.text
     is_genre = GENRE_MESSAGES.get(message)
-    if is_genre == 'None':
-        return CHOICE
+    if update.message.text == reply_keyboard[1][0]:
+        await update.message.reply_text(f'Поехали дальше!')
+        await country(update, context)
+        cnt += 1
+    elif cnt == 1:
+        exit()
     else:
         CHOICE["genre"].append(is_genre)
         await update.message.reply_text(f'Вы выбрали жанр {is_genre}. Хотите выбрать ещё один жанр или перейти на следующий критерий?', reply_markup=markup)
@@ -91,7 +97,7 @@ async def add_genre(update, context):
     await update.message.reply_text('Ок', reply_markup=markup)'''
 
 
-async def next_criterion(update, context):
+async def country(update, context):
     chat_id = update.message.chat_id
     reply_keyboard = [
         ["/USA"],
@@ -199,7 +205,7 @@ def main():
     application.add_handler(CommandHandler("no", no))
     application.add_handler(CommandHandler("yes", yes))
     application.add_handler(MessageHandler(filters.TEXT, add_genre))
-    application.add_handler(CommandHandler("next_criterion", next_criterion))
+    application.add_handler(CommandHandler("country", country))
     application.add_handler(MessageHandler(filters.TEXT, add_country))
     '''application.add_handler(CommandHandler("year", year))
     application.add_handler(CommandHandler("reset", reset))
