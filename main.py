@@ -51,6 +51,7 @@ async def no(update, context):
 
 
 async def yes(update, context):
+    #real_chose = 'genre'
     chat_id = update.message.text
     reply_keyboard = [
         ["/action"],
@@ -69,7 +70,11 @@ async def yes(update, context):
     await update.message.reply_text("Выберите жанр:", reply_markup=markup)
 
 
+'''real_chose = 'genre'
+
+
 async def add_genre(update, context):
+    global real_chose
     cnt = 0
     reply_keyboard = [
         ["/yes"],
@@ -78,18 +83,20 @@ async def add_genre(update, context):
     markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
     message = update.message.text
     is_genre = GENRE_MESSAGES.get(message)
-    if update.message.text == reply_keyboard[1][0]:
+    if update.message.text == reply_keyboard[1][0] or real_chose == 'country':
+        real_chose = ''
         await update.message.reply_text(f'Поехали дальше!')
         await country(update, context)
         cnt += 1
     elif cnt == 1:
         exit()
-    else:
+    elif real_chose == 'genre':
         CHOICE["genre"].append(is_genre)
         await update.message.reply_text(f'Вы выбрали жанр {is_genre}. Хотите выбрать ещё один жанр или перейти на следующий критерий?', reply_markup=markup)
+        real_chose = 'genre'
 
 
-'''async def ask_add_genre(update, context):
+async def ask_add_genre(update, context):
     chat_id = update.message.chat_id
     await update.message.reply_text('Хотите выбрать еще жанр?', reply_markup=markup)
     reply_keyboard = [["/да"], ["/нет"]] 
@@ -98,6 +105,7 @@ async def add_genre(update, context):
 
 
 async def country(update, context):
+    #real_chose = 'country'
     chat_id = update.message.chat_id
     reply_keyboard = [
         ["/USA"],
@@ -114,11 +122,11 @@ async def country(update, context):
     await update.message.reply_text("Выберите страну:", reply_markup=markup)
 
 
-async def add_country(update, context):
+'''async def add_country(update, context):
     message = update.message.text
     is_country = COUNTRY_MESSAGES.get(message)
     await update.message.reply_text(f'Вы выбрали страну {is_country}.')
-    CHOICE["country"].append(is_country)
+    CHOICE["country"].append(is_country)'''
 
 
 '''async def ask_add_country(update, context):
@@ -140,11 +148,11 @@ async def reset(update, context):
     await update.message.reply_text('Вы вернулись в меню', reply_markup=markup)
 
 
-def Isdigit(message):
+'''def Isdigit(message):
     if 1927 <= int(message) <= 2022:
         return True
     else:
-        return False
+        return False'''
 
 
 '''async def would_like_year(update, context):
@@ -163,53 +171,54 @@ async def echo(update, context):
     is_genre = GENRE_MESSAGES.get(message)
     is_country = COUNTRY_MESSAGES.get(message)
     is_year = 0
-    CHOICE["genre"].append(is_genre)
-    CHOICE["country"].append(is_country)
+    if CHOICE["genre"] == []:
+        CHOICE["genre"].append(is_genre)
 
-    if Isdigit(message):
+    if CHOICE["country"] == [None]:
+        CHOICE['country'] = []
+
+    if CHOICE["country"] == []:
+        CHOICE["country"].append(is_country)
+
+    if message.isdigit() and 1927 <= int(message) <= 2022:
         is_year = message
-        CHOICE["year"].append(is_year)
+        if CHOICE["year"] == []:
+            CHOICE["year"].append(is_year)
 
     if is_year:
         await update.message.reply_text(f'Вы выбрали год {is_year}.')
-        '''if would_like_year(update, context):
-            await update.message.reply_text(f'Введите год:')
-            message = update.message.text
-            is_year = 0
-            await update.message.reply_text(f'Вы выбрали год {is_year}.')
-            if Isdigit(message):
-                is_year = message
-                CHOICE["year"].append(is_year)'''
 
     if is_genre:
-        await update.message.reply_text(f'Вы выбрали жанр {is_genre}.')
-        '''reply_keyboard = [["/да"], ["/нет"]]
+        reply_keyboard = [
+            ["/country"],
+        ]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-        await update.message.reply_text('Хотите выбрать еще?', reply_markup=markup)
-        yesno = {'/да': 'yes', '/нет': 'no'}'''
+        await update.message.reply_text(f'Вы выбрали жанр {is_genre}.', reply_markup=markup)
 
     elif is_country:
-        await update.message.reply_text(f'Вы выбрали страну {is_country}.')
-        '''reply_keyboard = [["/да"], ["/нет"]]
+        reply_keyboard = [
+            ["/year"],
+        ]
         markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True)
-        await update.message.reply_text('Хотите выбрать еще?', reply_markup=markup)'''
+        await update.message.reply_text(f'Вы выбрали страну {is_country}.', reply_markup=markup)
 
-    print(CHOICE)
+    if CHOICE["genre"] != [] and CHOICE["country"] != [] and CHOICE["year"] != []:
+        print(CHOICE)
 
 
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("movie", movie))
-    #application.add_handler(CommandHandler("series", series))
+    application.add_handler(CommandHandler("series", series))
     application.add_handler(CommandHandler("no", no))
     application.add_handler(CommandHandler("yes", yes))
-    application.add_handler(MessageHandler(filters.TEXT, add_genre))
+    #application.add_handler(MessageHandler(filters.TEXT, add_genre))
     application.add_handler(CommandHandler("country", country))
-    application.add_handler(MessageHandler(filters.TEXT, add_country))
-    '''application.add_handler(CommandHandler("year", year))
+    #application.add_handler(MessageHandler(filters.TEXT, add_country))
+    application.add_handler(CommandHandler("year", year))
     application.add_handler(CommandHandler("reset", reset))
-    #application.add_handler(MessageHandler(filters.TEXT, echo))'''
+    application.add_handler(MessageHandler(filters.TEXT, echo))
     application.run_polling()
 
 
